@@ -1,0 +1,74 @@
+.footer {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.element {
+  color: white;
+  cursor: pointer;
+  position: relative;
+}
+.tooltip {
+  position: absolute;
+  bottom: -14px;
+  left: 12px;
+  background-color: white;
+  padding: 2px 5px;
+  color: black !important;
+  font-size: 10px;
+  z-index: 9000;
+  font-weight: 200 !important;
+}
+.element:not(:first-child) {
+  margin-left: 15px;
+}
+.footer ul {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  border-bottom: 1px solid white;
+  padding-bottom: 10px;
+}
+.text {
+  position: absolute;
+  bottom: 40px;
+  left: 50px;
+  color: white;
+  font-size: 16px;
+  font-weight: 200;
+}
+.angry {
+  position: absolute;
+  top: 80px;
+  left: 80px;
+  transform: translate(-50%, -50%);
+  width: 150px;
+  height: 150px;
+}
+.content {
+  color: #caeaff;
+  font-weight: lighter;
+  text-shadow: 0 0 20px hsl(0deg 0% 100% / 40%), 0 0 5px hsl(0deg 0% 100% / 30%),
+    0 0 1px #00d0ff;
+  font-size: 25px;
+  text-align: center;
+}
+.opensea {
+  width: 35px;
+  height: 35px;
+}
+.twitter {
+  color: blue;
+  font-size: 35px !important;
+}
+
+@media (max-width: 425px) {
+  .footer {
+    bottom: 60px;
+  }
+  .text {
+    bottom: 20px;
+  }
+}
