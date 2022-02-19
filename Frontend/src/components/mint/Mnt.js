@@ -15,7 +15,7 @@ import {
   presaleBuy,
 } from "../../Contractor/SmapleCourt";
 
-import angry from "../../assets/angry.png";
+import angry from "../../assets/PROJECT GODJIRA.png";
 import RingLoader from "react-spinners/RingLoader";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -136,7 +136,7 @@ const Mint = (props) => {
                     /mint
                   </p>
                 </div>
-                <div className="addButtons">
+                {/* <div className="addButtons">
                   <button className="addButton" onClick={decreaseCount}>
                     -
                   </button>
@@ -144,7 +144,7 @@ const Mint = (props) => {
                   <button className="addButton" onClick={increaseCount}>
                     +
                   </button>
-                </div>
+                </div> */}
               </div>
               {/* //////////////////// */}
               <div className="mint-total">

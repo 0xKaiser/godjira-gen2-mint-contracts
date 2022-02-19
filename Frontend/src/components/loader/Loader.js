@@ -2,7 +2,7 @@ import React, { lazy } from "react";
 import SplitText from "../SplitText";
 import "./Loader.css";
 // import PacmanLoader from "react-spinners/PacmanLoader";
-import angry from "../../assets/angry.png";
+import angry from "../../assets/PROJECT GODJIRA.png";
 
 const Loader = () => {
   return (
@@ -10,7 +10,7 @@ const Loader = () => {
       {/* <PacmanLoader color="#3E8E7E" loading={true} size={50} /> */}
       <img src={angry} alt="angry" className="loader-image" />
       <p style={{ marginLeft: "50px" }}>
-        <SplitText copy="Welcome to The Tribe" role="heading" />
+        <SplitText copy="Welcome to Godjira" role="heading" />
         <span
           className="bar"
           style={{

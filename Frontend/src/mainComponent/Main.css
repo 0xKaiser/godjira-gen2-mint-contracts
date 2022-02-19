@@ -9,7 +9,7 @@ body {
   background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
   width: 102%;
   height: 102vh;
-  background-image: url("../assets/image.jpeg");
+  background-image: url("../assets/bg-image.png");
   background-repeat: no-repeat;
   background-size: cover;
   overflow: hidden;
@@ -19,7 +19,7 @@ body {
 .body {
   width: 100%;
   height: 100vh;
-  background-image: url("../assets/image.jpeg");
+  background-image: url("../assets/bg-image.png");
 }
 .mute {
   color: white;

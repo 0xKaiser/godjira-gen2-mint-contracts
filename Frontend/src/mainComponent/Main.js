@@ -6,7 +6,7 @@ import parallax from "./../components/parallax";
 import song from "../assets/audio.mp3";
 import "./Main.css";
 import Footer from "./Footer";
-import angry from "../assets/angry.png";
+import angry from "../assets/PROJECT GODJIRA.png";
 import TextComponent from "./../components/TextComponent";
 import Mint from "./../components/mint/Mnt";
 

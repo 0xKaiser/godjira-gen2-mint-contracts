@@ -30,7 +30,7 @@ const Footer = () => {
           ))}
         </ul>
       </div>
-      <h2 className="text">Music: Hiraeth by Scott Buckley</h2>
+      <h2 className="text">Music: Hiraeth by Godjira</h2>
     </>
   );
 };
