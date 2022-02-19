@@ -103,7 +103,8 @@ const Mint = (props) => {
             }}
           />
           <h2 className="available">
-            {max - available} of {max} available
+            {/* {max - available} of {max} available */}
+            3333 of 3333 available
           </h2>
           {preSaleBool &&
             (whitelistMessage ? (
@@ -117,36 +118,6 @@ const Mint = (props) => {
               <img src={angry} className="sample" />
             </section>
             <section className="mint-content">
-              <div className="mint-add">
-                <p className="sale">
-                  {preSaleBool && "Pre Sale"}
-                  {!preSaleBool && mainSaleBool && "Main Sale"}
-                </p>
-                <div className="mint-add-content">
-                  <img src={ethereum} className="ethereum" />
-                  <p
-                    className="ethereum-value"
-                    style={{ fontSize: "30px", textTransform: "capitalize" }}
-                  >
-                    {preSaleBool && preSaleValue
-                      ? preSaleValue
-                      : !preSaleBool && mainSaleBool && mainSaleValue
-                      ? mainSaleValue
-                      : 0}
-                    /mint
-                  </p>
-                </div>
-                {/* <div className="addButtons">
-                  <button className="addButton" onClick={decreaseCount}>
-                    -
-                  </button>
-                  <h4>{count}</h4>
-                  <button className="addButton" onClick={increaseCount}>
-                    +
-                  </button>
-                </div> */}
-              </div>
-              {/* //////////////////// */}
               <div className="mint-total">
                 <div className="mint-add-content">
                   <img src={ethereum} className="ethereum ethereum-1" />
@@ -154,36 +125,12 @@ const Mint = (props) => {
                     className="ethereum-value"
                     style={{ fontSize: "40px", textTransform: "capitalize" }}
                   >
-                    {preSaleBool && preSaleValue
-                      ? preSaleValue * count
-                      : !preSaleBool && mainSaleBool && mainSaleValue
-                      ? mainSaleValue * count
-                      : 0}
-                    /Total
+                    1
                   </p>
                 </div>
-                <button
-                  disabled={
-                    (preSaleBool && !whitelistMessage) ||
-                    (!preSaleBool && !mainSaleBool)
-                  }
-                  className={
-                    (preSaleBool && !whitelistMessage && "disable") ||
-                    (!preSaleBool && !mainSaleBool && "disable")
-                  }
-                  onClick={() => {
-                    if (preSaleBool) {
-                      presaleBuy(
-                        preSaleValue,
-                        whitelistMessage,
-                        count,
-                        setRefresh
-                      );
-                    } else {
-                      buy(mainSaleValue, count, setRefresh);
-                    }
-                  }}
-                >
+                <button onClick={()=>{
+
+                }}>
                   MINT
                 </button>
                 <ToastContainer />

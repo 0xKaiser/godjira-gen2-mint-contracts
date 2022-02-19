@@ -1,12 +1,12 @@
 body {
   margin: 0;
-  font-family: "Oswald";
+  font-family: 'Oswald';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-  font-family: "Oswald",
+  font-family: 'Oswald',
     monospace;
 }
 * {
