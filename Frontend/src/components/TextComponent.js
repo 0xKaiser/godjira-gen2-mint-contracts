@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import SplitText from "./SplitText";
 import { providerHandler } from "./../Contractor/SmapleCourt";
 
 const TextComponent = (props) => {
@@ -9,25 +8,49 @@ const TextComponent = (props) => {
         .request({ method: "eth_requestAccounts" })
         .then(async (result) => {
           await providerHandler();
-          props.showMintHandler(result);
+          // props.showMintHandler(result);
+          setConnected(true);
         })
         .catch((e) => {});
     }
   };
+
+  const [connected, setConnected] = useState(false);
+
+  const [minted, setMinted] = useState(false);
+
+  const mintToken = () => {
+    if(minted){
+      alert("You have already minted token number 6")
+    }else{
+      setMinted(true)
+    }
+  }
+
   return (
     <div className="textContainer">
-      <p>
-        {/* <SplitText
-          copy="Connect your wallet. Your journey will start."
-          role="heading"
-        /> */}
-        <img style = {{width : "60%", height : "5%"}} src = {require('../assets/Group 131.png')} />
-        {/* <span className="bar">__</span> */}
-      </p>
-
-      <button className="connect-wallet-button" onClick={connectWalletHandler}>
-        <span style = {{marginRight:"4px"}}><img src = {require("../assets/wallet.png")}/></span>CONNECT YOUR WALLET
-      </button>
+      {connected ? (
+        <>
+          <button
+            className="connect-wallet-button"
+            onClick={() => {
+              mintToken()
+            }}
+          >
+            MINT TOKEN
+          </button>
+        </>
+      ) : (
+        <button
+          className="connect-wallet-button"
+          onClick={connectWalletHandler}
+        >
+          <span style={{ marginRight: "4px" }}>
+            <img src={require("../assets/wallet.png")} />
+          </span>
+          CONNECT
+        </button>
+      )}
     </div>
   );
 };

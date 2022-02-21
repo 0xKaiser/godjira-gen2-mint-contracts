@@ -34,8 +34,8 @@ const Main = (props) => {
 
   return (
     <div id="parallax">
-      <img src={angry} className="angry" alt="angry" />
       <Parallax />
+      <img style = {{width : "30%", height : "10%", padding: "2%"}} src = {require('../assets/Group 131.png')} />
       <div className="container">
         {play ? (
           <VolumeMuteIcon className="mute" onClick={() => playAudio("stop")} />
