@@ -17,15 +17,16 @@ const TextComponent = (props) => {
   return (
     <div className="textContainer">
       <p>
-        <SplitText
+        {/* <SplitText
           copy="Connect your wallet. Your journey will start."
           role="heading"
-        />
-        <span className="bar">__</span>
+        /> */}
+        <img style = {{width : "60%", height : "5%"}} src = {require('../assets/Group 131.png')} />
+        {/* <span className="bar">__</span> */}
       </p>
 
-      <button className="button" onClick={connectWalletHandler}>
-        CONNECT YOUR WALLET
+      <button className="connect-wallet-button" onClick={connectWalletHandler}>
+        <span style = {{marginRight:"4px"}}><img src = {require("../assets/wallet.png")}/></span>CONNECT YOUR WALLET
       </button>
     </div>
   );

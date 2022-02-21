@@ -15,7 +15,7 @@ import {
   presaleBuy,
 } from "../../Contractor/SmapleCourt";
 
-import angry from "../../assets/PROJECT GODJIRA.png";
+import angry from "../../assets/Group 131.png";
 import RingLoader from "react-spinners/RingLoader";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -34,28 +34,29 @@ const Mint = (props) => {
   const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
-    totalSupply().then((e) => {
-      setAvailable(e);
-    });
-    presaleLive().then((e) => {
-      setPreSaleBool(e);
-    });
-    presaleValue().then((e) => {
-      const dec = e;
-      setpreSaleValue((prev) => (dec === 0 ? prev : dec));
-    });
-    maxCount().then((e) => {
-      const dec = parseInt(e._hex, 16);
-      setMax(dec);
-      setLoading(false);
-    });
-    saleLive().then((e) => {
-      setMainSaleBool(e);
-    });
-    mainsaleValue().then((e) => {
-      const dec = e;
-      setMainSaleValue((prev) => (dec === 0 ? prev : dec));
-    });
+    // totalSupply().then((e) => {
+    //   setAvailable(e);
+    // });
+    // presaleLive().then((e) => {
+    //   setPreSaleBool(e);
+    // });
+    // presaleValue().then((e) => {
+    //   const dec = e;
+    //   setpreSaleValue((prev) => (dec === 0 ? prev : dec));
+    // });
+    // maxCount().then((e) => {
+    //   const dec = parseInt(e._hex, 16);
+    //   setMax(dec);
+    //   setLoading(false);
+    // });
+    // saleLive().then((e) => {
+    //   setMainSaleBool(e);
+    // });
+    // mainsaleValue().then((e) => {
+    //   const dec = e;
+    //   setMainSaleValue((prev) => (dec === 0 ? prev : dec));
+    // });
+    setLoading(false)
   }, []);
   useEffect(() => {
     if (refresh) {
@@ -115,7 +116,7 @@ const Mint = (props) => {
 
           <div className="mint-container">
             <section className="sample-container">
-              <img src={angry} className="sample" />
+              <img src={angry} style = {{width : "400px", height : "80px"}}/>
             </section>
             <section className="mint-content">
               <div className="mint-total">
@@ -123,7 +124,7 @@ const Mint = (props) => {
                   <img src={ethereum} className="ethereum ethereum-1" />
                   <p
                     className="ethereum-value"
-                    style={{ fontSize: "40px", textTransform: "capitalize" }}
+                    style={{ color: "red", fontSize: "40px", textTransform: "capitalize" }}
                   >
                     1
                   </p>
@@ -131,7 +132,7 @@ const Mint = (props) => {
                 <button onClick={()=>{
 
                 }}>
-                  MINT
+                  <span style={{ color: "red",}}>MINT</span>
                 </button>
                 <ToastContainer />
               </div>

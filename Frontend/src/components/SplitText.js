@@ -6,6 +6,7 @@ const SplitText = (props) => {
       {props.copy.split("").map(function (char, index) {
         let style = {
           animationDelay: 0 + index / 10 + "s",
+          color: "red"
         };
         return (
           <span aria-hidden="true" key={index} style={style}>

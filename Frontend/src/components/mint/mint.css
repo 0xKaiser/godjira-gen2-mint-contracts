@@ -13,7 +13,7 @@
   display: none;
 }
 .react-sweet-progress-line-inner {
-  background: linear-gradient(90deg, #ff1700 0%, #3fa796 100%) 0px 0px no-repeat
+  background: linear-gradient(90deg, #ff1700 0%, #2AF3FF 100%) 0px 0px no-repeat
     padding-box padding-box transparent !important;
   min-height: 20px !important;
 }
@@ -103,8 +103,8 @@
   letter-spacing: 4px;
   padding: 0px 30px;
   border: none;
-  background-color: #84dfff;
-  box-shadow: rgb(#84dfff / 56%) 5px 5px 20px;
+  background-color: #d4f0f1;
+  box-shadow: rgb(#2AF3FF / 56%) 5px 5px 20px;
   border-radius: 32px;
   color: rgb(34, 34, 34);
   cursor: pointer;

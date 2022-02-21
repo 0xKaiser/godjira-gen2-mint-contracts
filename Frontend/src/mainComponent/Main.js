@@ -3,7 +3,7 @@ import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import VolumeMuteIcon from "@mui/icons-material/VolumeMute";
 import Parallax from "../components/parallax/Parallax";
 import parallax from "./../components/parallax";
-import song from "../assets/Sonic-the-Hedgehog-2-Theme.mp3";
+import song from "../assets/web_background_music.mp3";
 import "./Main.css";
 import Footer from "./Footer";
 import angry from "../assets/PROJECT GODJIRA.png";

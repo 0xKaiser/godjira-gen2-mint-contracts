@@ -1,13 +1,11 @@
 import React from "react";
 import "./Footer.css";
-import opensea from "../assets/opensea.png";
-import medium from "../assets/medium.png";
+import opensea from "../assets/Group 148.png";
 import twitter from "../assets/twitter.png";
 
 const links = [
-  { src: twitter, name: "Twitter" },
-  { src: medium, name: "Medium" },
-  { src: opensea, name: "Opensea" },
+  { src: twitter, url:"https://twitter.com/PGodjira", name: "Twitter" },
+  { src: opensea, url:"https://opensea.io/collection/projectgodjiragenesis", name: "Opensea" },
 ];
 const Footer = () => {
   return (
@@ -16,21 +14,22 @@ const Footer = () => {
         <ul>
           {links.map((item, i) => (
             <li className="element" key={i}>
-              <img
-                src={item.src}
-                alt=""
-                className="opensea"
-                style={{
-                  width: item.name === "Medium" ? "43px" : "35px",
-                  height: item.name === "Medium" ? "43px" : "35px",
-                }}
-                title={item.name}
-              />
+              <a className="link" href={item.url} target="_blank">
+                  <img
+                    src={item.src}
+                    alt=""
+                    style={{
+                      width: "28px",
+                      height: "28px",
+                    }}
+                    title={item.name}
+                  />
+              </a>
             </li>
           ))}
         </ul>
       </div>
-      <h2 className="text">Music: Hiraeth by Godjira</h2>
+      <h2 className="text">Music: by Godjira</h2>
     </>
   );
 };
