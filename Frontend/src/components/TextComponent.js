@@ -64,8 +64,8 @@ const TextComponent = (props) => {
             className="connect-wallet-button"
             onClick={connectWalletHandler}
           >
-            <span style={{ marginRight: "4px" }}>
-              <img src={require("../assets/wallet.png")} />
+            <span>
+              <img style={{ marginRight: "12px",  width:"30px", height:"30px"}} src={require("../assets/wallet.png")} />
             </span>
             CONNECT
           </button>
