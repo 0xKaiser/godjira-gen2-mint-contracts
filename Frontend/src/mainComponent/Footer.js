@@ -29,7 +29,6 @@ const Footer = () => {
           ))}
         </ul>
       </div>
-      <h2 className="text">Music: by Godjira</h2>
     </>
   );
 };

@@ -8,7 +8,6 @@ import "./Main.css";
 import Footer from "./Footer";
 import angry from "../assets/PROJECT GODJIRA.png";
 import TextComponent from "./../components/TextComponent";
-import Mint from "./../components/mint/Mnt";
 
 const Main = (props) => {
   const [play, setPlay] = useState(false);
@@ -35,7 +34,7 @@ const Main = (props) => {
   return (
     <div id="parallax">
       <Parallax />
-      <img style = {{width : "30%", height : "10%", padding: "2%"}} src = {require('../assets/Group 131.png')} />
+      <img style = {{width : "35%", height : "14%", marginTop: "3%", marginLeft:"32%"}} src = {require('../assets/Project Godjira@2x.png')} />
       <div className="container">
         {play ? (
           <VolumeMuteIcon className="mute" onClick={() => playAudio("stop")} />
@@ -46,11 +45,7 @@ const Main = (props) => {
         <audio id="playAudio">
           <source src={song} />
         </audio>
-        {showMint ? (
-          <Mint address={address} />
-        ) : (
-          <TextComponent showMintHandler={showMintHandler} />
-        )}
+        <TextComponent/>
       </div>
       <Footer />
     </div>
