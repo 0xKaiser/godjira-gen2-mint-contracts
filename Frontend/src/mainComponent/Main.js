@@ -34,7 +34,7 @@ const Main = (props) => {
   return (
     <div id="parallax">
       <Parallax />
-      <img style = {{width : "35%", height : "14%", marginTop: "3%", marginLeft:"32%"}} src = {require('../assets/Project Godjira@2x.png')} />
+      <img style = {{width: "682px", height: "71px", marginTop: "3%", marginLeft:"27.5%"}} src = {require('../assets/Project Godjira@2x.png')} />
       <div className="container">
         {play ? (
           <VolumeMuteIcon className="mute" onClick={() => playAudio("stop")} />

@@ -34,7 +34,7 @@ const TextComponent = (props) => {
     <div className="textContainer">
       <div className="gen-2-logo">
         <img
-          style={{ width: "35%", height: "14%" }}
+          style={minted ? { width: "392px", height: "178px",  marginLeft: "10%" } : { width: "392px", height: "178px"}}
           src={require("../assets/Group 13081@2x.png")}
         />
       </div>
@@ -55,7 +55,7 @@ const TextComponent = (props) => {
                 MINT NOW!
               </button>
               <div className="number-of-mint">
-                <span style={{ fontFamily: "Osake" }}>2500 </span>LEFT
+                <span className="osake-font-apply">2500 </span>LEFT
               </div>
             </>
           )
