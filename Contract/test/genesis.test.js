@@ -6,7 +6,6 @@ describe('Genesis', () => {
   before(async () => {
     const users = await ethers.getSigners()
 
-    this.tokenId = "111709445291923781731501347496390431316542435953578477260271931475106727985153"
     this.tokenUri = "https://gladiators-metadata-api.herokuapp.com/api/token"
     this.nftOwner = users[0]
     this.users = users.slice(1)
@@ -15,7 +14,25 @@ describe('Genesis', () => {
 
     this.genesis = await genesis.deploy("genesis", "genesis", this.tokenUri)
 
-    await this.genesis.connect(this.nftOwner).mint(this.users[0].address, this.tokenId)
+    await this.genesis.connect(this.nftOwner).mint(5)
+  })
+
+  it('mint function fails', async () => {
+    await expect(this.genesis.connect(this.nftOwner).mint(
+      330
+    )).to.revertedWith('genesis : max limit')
+
+    await expect(this.genesis.connect(this.nftOwner).mint(
+      0
+    )).to.revertedWith('genesis : mint amount invalid')
+  })
+
+  it('mint function succeeds', async () => {
+    await this.genesis.connect(this.nftOwner).mint(3)
+
+    expect(
+      (await this.genesis.tokenIdTracker())
+    ).to.equal(8)
   })
 
   it('setBaseURI function fails', async () => {
