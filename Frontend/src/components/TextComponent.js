@@ -10,6 +10,12 @@ const TextComponent = (props) => {
           await providerHandler();
           // props.showMintHandler(result);
           setConnected(true);
+          // get_address().then((e) => {
+          //   let strFirstThree = e.substring(0, 5);
+          //   let strLastThree = e.substr(e.length - 5);
+          //   const addr = `${strFirstThree}.............${strLastThree}`;
+          //   setAddress(addr);
+          // });
         })
         .catch((e) => {});
     }
@@ -46,6 +52,14 @@ const TextComponent = (props) => {
             </div>
           ) : (
             <>
+              {connected && !minted && <>
+                <div className = "wallet-address">
+                  0x60a...74f71
+                </div>
+                <div className = "wallet-address-connected">
+                  Connected
+                </div>
+              </>}
               <button
                 className="connect-wallet-button"
                 onClick={() => {
@@ -61,7 +75,7 @@ const TextComponent = (props) => {
           )
         ) : (
           <button
-            className="connect-wallet-button"
+            className="connect-wallet-button-initial"
             onClick={connectWalletHandler}
           >
             <span>
