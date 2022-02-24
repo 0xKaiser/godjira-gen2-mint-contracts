@@ -22,7 +22,7 @@ contract Genesis is ERC721Enumerable, Ownable, ReentrancyGuard {
 
     address public oldGenesis;
 
-    event Mint(address indexed to, uint256 amount);
+    // event Mint(address indexed to, uint256 amount);
     
     event Claim(uint256[] tokenIds);
 
@@ -41,16 +41,15 @@ contract Genesis is ERC721Enumerable, Ownable, ReentrancyGuard {
     /**
      * @dev Mint NFTs
      */
-    function mint(uint256 _amount) external nonReentrant {
-        require(_amount > 0, "genesis : mint amount invalid");
-        require(tokenIdTracker + _amount <= CAP, "genesis : max limit");
+    function mint(uint256[] memory _tokens) external nonReentrant {
+        require(_tokens.length > 0, "genesis : mint amount invalid");
+        require(totalSupply() + _tokens.length <= CAP, "genesis : max limit");
 
-        for (uint256 i = 0; i < _amount; i++) {
-            tokenIdTracker += 1;
-            _safeMint(nftOwner, tokenIdTracker);
+        for (uint256 i = 0; i < _tokens.length; i++) {
+            _safeMint(nftOwner, _tokens[i]);
         }
 
-        emit Mint(nftOwner, _amount);
+        // emit Mint(nftOwner, _amount);
     }
 
     /**
