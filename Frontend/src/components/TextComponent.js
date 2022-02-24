@@ -34,7 +34,7 @@ const TextComponent = (props) => {
     <div className="textContainer">
       <div className="gen-2-logo">
         <img
-          style={minted ? { width: "392px", height: "178px",  marginLeft: "10%" } : { width: "392px", height: "178px"}}
+          style={minted ? {width: "450px", height: "200px",  marginLeft: "10%", marginTop:"12%" } : { width: "450px", height: "200px", marginTop:"12%"}}
           src={require("../assets/Group 13081@2x.png")}
         />
       </div>

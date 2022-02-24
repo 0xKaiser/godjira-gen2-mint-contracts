@@ -10,7 +10,7 @@ const Loader = () => {
       {/* <PacmanLoader color="#3E8E7E" loading={true} size={50} /> */}
       <img src={angry} alt="angry" className="loader-image" />
       <p style={{ marginLeft: "50px" }}>
-        <SplitText copy="Welcome to Godjira" role="heading" />
+        {/* <SplitText copy="Welcome to Godjira" role="heading" /> */}
         <span
           className="bar"
           style={{
