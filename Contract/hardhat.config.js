@@ -47,6 +47,10 @@ module.exports = {
       }
     }
   },
+  // mocha: {
+    // reporter: 'eth-gas-reporter',
+    // reporterOptions : { ... } // See options below
+  // },
   etherscan: {
     apiKey: ETHERSCAN_API_KEY
   }

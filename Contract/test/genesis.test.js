@@ -9,8 +9,7 @@ describe('Genesis', () => {
     this.tokenUri = "https://gladiators-metadata-api.herokuapp.com/api/token"
     this.deployer = users[0]
     this.users = users.slice(1)
-    this.nftOwner = "0x3B0C7fb36cCf7bB203e5126B2192371Af91831BF"
-
+    
     const genesis = await ethers.getContractFactory('Genesis')
     const mockNFT = await ethers.getContractFactory('MockNFT')
 
@@ -21,7 +20,6 @@ describe('Genesis', () => {
     await this.mockNFT.connect(this.users[0]).mint(this.users[1].address, 1)
 
     await this.mockNFT.connect(this.users[1]).setApprovalForAll(this.genesis.address, true)
-    // await this.genesis.connect(this.nftOwner).approve(this.users[1].address, 1)
   })
 
   it('mint function fails', async () => {
