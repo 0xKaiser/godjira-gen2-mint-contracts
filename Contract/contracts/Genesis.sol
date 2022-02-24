@@ -41,7 +41,7 @@ contract Genesis is ERC721Enumerable, Ownable, ReentrancyGuard {
     /**
      * @dev Mint NFTs
      */
-    function mint(uint256[] memory _tokens) external nonReentrant {
+    function mint(uint256[] memory _tokens) external nonReentrant onlyOwner{
         require(_tokens.length > 0, "genesis : mint amount invalid");
         require(totalSupply() + _tokens.length <= CAP, "genesis : max limit");
 
