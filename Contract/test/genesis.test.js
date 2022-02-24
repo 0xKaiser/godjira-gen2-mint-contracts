@@ -16,27 +16,29 @@ describe('Genesis', () => {
     this.mockNFT = await mockNFT.deploy()
     this.genesis = await genesis.deploy("genesis", "genesis", this.tokenUri, this.mockNFT.address)
 
-    await this.genesis.connect(this.deployer).mint(1)
+    await this.genesis.connect(this.deployer).mint([1])
     await this.mockNFT.connect(this.users[0]).mint(this.users[1].address, 1)
 
     await this.mockNFT.connect(this.users[1]).setApprovalForAll(this.genesis.address, true)
   })
 
   it('mint function fails', async () => {
+    const tokens = Array(333).fill(0)
+
     await expect(this.genesis.connect(this.deployer).mint(
-      333
+      tokens
     )).to.revertedWith('genesis : max limit')
 
     await expect(this.genesis.connect(this.deployer).mint(
-      0
+      []
     )).to.revertedWith('genesis : mint amount invalid')
   })
 
   it('mint function succeeds', async () => {
-    await this.genesis.connect(this.deployer).mint(3)
+    await this.genesis.connect(this.deployer).mint([2,3,4])
 
     expect(
-      (await this.genesis.tokenIdTracker())
+      (await this.genesis.totalSupply())
     ).to.equal(4)
   })
 

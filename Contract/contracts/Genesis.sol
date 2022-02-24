@@ -7,9 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 contract Genesis is ERC721Enumerable, Ownable, ReentrancyGuard {
-    /// @dev token id tracker
-    uint256 public tokenIdTracker;
-
+    
     /// @dev Maximum elements
     uint256 CAP = 333;
 
@@ -21,7 +19,7 @@ contract Genesis is ERC721Enumerable, Ownable, ReentrancyGuard {
 
     address public oldGenesis;
 
-    event Mint(address indexed to, uint256 amount);
+    event Mint(address indexed to, uint256[] _tokens);
     
     event Claim(uint256[] tokenIds);
 
@@ -40,16 +38,16 @@ contract Genesis is ERC721Enumerable, Ownable, ReentrancyGuard {
     /**
      * @dev Mint NFTs
      */
-    function mint(uint256 _amount) external onlyOwner nonReentrant {
-        require(_amount > 0, "genesis : mint amount invalid");
-        require(tokenIdTracker + _amount <= CAP, "genesis : max limit");
 
-        for (uint256 i = 0; i < _amount; i++) {
-            tokenIdTracker += 1;
-            _safeMint(nftOwner, tokenIdTracker);
+    function mint(uint256[] memory _tokens) external nonReentrant onlyOwner{
+        require(_tokens.length > 0, "genesis : mint amount invalid");
+        require(totalSupply() + _tokens.length <= CAP, "genesis : max limit");
+     
+        for (uint256 i = 0; i < _tokens.length; i++) {
+            _safeMint(nftOwner, _tokens[i]);
         }
-
-        emit Mint(nftOwner, _amount);
+     
+        emit Mint(nftOwner, _tokens);
     }
 
     /**
