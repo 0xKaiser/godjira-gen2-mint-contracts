@@ -15,6 +15,7 @@
     "@openzeppelin/contracts": "^4.3.1",
     "chai": "^4.3.4",
     "dotenv": "^10.0.0",
+    "erc721a": "^2.2.0",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.4.6",
     "hardhat": "^2.6.2",
@@ -22,6 +23,6 @@
     "solidity-coverage": "^0.7.17"
   },
   "dependencies": {
-    "eth-gas-reporter": "^0.2.24"
+    "hardhat-gas-reporter": "^1.0.8"
   }
 }
