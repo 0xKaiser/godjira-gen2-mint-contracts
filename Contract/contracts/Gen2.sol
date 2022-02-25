@@ -23,6 +23,7 @@ contract Gen2 is ERC721A, Ownable, Pausable, ReentrancyGuard {
 
     /// @dev wallet address => whitelist status
     mapping(address => bool) public whitelist;
+    mapping(address => uint256) public nfts;
 
     event Minted(address indexed to, uint256 tokenId);
     event SetBaseTokenURI(string baseTokenURI);
@@ -52,7 +53,6 @@ contract Gen2 is ERC721A, Ownable, Pausable, ReentrancyGuard {
      */
     function mint(uint256 _amount) external nonReentrant saleIsOpen {
         uint256 _tokenIdTracker = tokenIdTracker;
-        uint256 bal = super.balanceOf(msg.sender);
 
         require(_amount > 0, "gen2 : mint amount invalid");
         require(_tokenIdTracker + _amount <= CAP, "gen2 : max limit");
@@ -68,6 +68,8 @@ contract Gen2 is ERC721A, Ownable, Pausable, ReentrancyGuard {
                 emit Minted(legendaryAddress, _tokenIdTracker + 1);
                 _tokenIdTracker++;
             }
+            
+            nfts[legendaryAddress] = _tokenIdTracker;
         } else if (_tokenIdTracker + _amount < 111) {
             require(owner() == msg.sender, "gen2: caller is not the owner");
 
@@ -78,16 +80,20 @@ contract Gen2 is ERC721A, Ownable, Pausable, ReentrancyGuard {
                 emit Minted(godjiraAddress, _tokenIdTracker + 1);
                 _tokenIdTracker++;
             }
+
+            nfts[godjiraAddress] = _tokenIdTracker;
         } else if (_tokenIdTracker < 1301) {
             require(
                 msg.sender != legendaryAddress && msg.sender != godjiraAddress,
                 "gen2: legendary, godjira unavailable"
             );
             require(_amount == 1, "gen2: public invalid amount");
-            require(bal == 0, "gen2: public invalid address");
+            require(nfts[msg.sender] == 0, "gen2: public invalid address");
 
             tokenIdTracker = _tokenIdTracker + 1;
             _safeMint(msg.sender, _tokenIdTracker + 1);
+            nfts[msg.sender] = _tokenIdTracker + 1;
+
             emit Minted(msg.sender, _amount);
         } else if (_tokenIdTracker < 2901) {
             require(
@@ -99,10 +105,11 @@ contract Gen2 is ERC721A, Ownable, Pausable, ReentrancyGuard {
                 whitelist[msg.sender],
                 "gen2: whitelist caller not whitelisted"
             );
-            require(bal == 0, "gen2: whitelist invalid address");
+            require(nfts[msg.sender] == 0, "gen2: whitelist invalid address");
 
             tokenIdTracker = _tokenIdTracker + 1;
             _safeMint(msg.sender, _tokenIdTracker + 1);
+            nfts[msg.sender] = _tokenIdTracker + 1;
 
             emit Minted(msg.sender, _amount);
         } else if (_tokenIdTracker >= 2901) {
@@ -111,10 +118,12 @@ contract Gen2 is ERC721A, Ownable, Pausable, ReentrancyGuard {
                 "gen2: legendary, godjira unavailable"
             );
             require(_amount == 1, "gen2: free invalid amount");
-            require(bal == 0, "gen2: free invalid address");
+            require(nfts[msg.sender] == 0, "gen2: free invalid address");
 
             tokenIdTracker = _tokenIdTracker + 1;
             _safeMint(msg.sender, _tokenIdTracker + 1);
+            nfts[msg.sender] = _tokenIdTracker + 1;
+
             emit Minted(msg.sender, _amount);
         }
     }
