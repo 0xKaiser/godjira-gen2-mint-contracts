@@ -11,18 +11,14 @@ contract Genesis is ERC721Enumerable, Ownable, ReentrancyGuard {
     /// @dev token id tracker
     uint256 public tokenIdTracker;
 
-    /// @dev Maximum elements
-    uint256 CAP = 333;
-
     /// baseTokenURI
     string public baseTokenURI;
 
     address public immutable nftOwner =
-        0x3B0C7fb36cCf7bB203e5126B2192371Af91831BF;
+        0xfEb8F9609c677dC57731B1e940fE2ad8faa6b169;
 
     address public oldGenesis;
 
-    // event Mint(address indexed to, uint256 amount);
     
     event Claim(uint256[] tokenIds);
     uint[] public tokenToOpenseaMap;
