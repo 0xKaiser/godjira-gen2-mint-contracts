@@ -1,6 +1,7 @@
 const { expect } = require('chai')
 const { ethers } = require("hardhat")
-const { BN } = require("web3-utils");
+// const { BN } = require("web3-utils");
+const { advanceTime } = require('./utils')
 
 describe.only('Gen2Sale', () => {
   
@@ -53,45 +54,57 @@ describe.only('Gen2Sale', () => {
     ).to.equal(false)
   })
 
+
+  it('addPrivateSaleList function fails', async () => {
+    await expect(this.gen2Sale.connect(this.deployer).addPrivateSaleList(
+      [this.users[2].address]
+    )).to.revertedWith('gen2Sale.addPrivateSaleList: should be not whitelist')
+  })
+
+  it('addPrivateSaleList function succeeds', async () => {
+    await this.gen2Sale.connect(this.deployer).addPrivateSaleList([this.users[6].address, this.users[7].address])
+    expect(
+      (await this.gen2Sale.privateSaleList(this.users[7].address))
+    ).to.equal(true)
+  })
+
+  it('removePrivateSaleList function succeeds', async () => {
+    await this.gen2Sale.connect(this.deployer).removePrivateSaleList([this.users[7].address])
+    expect(
+      (await this.gen2Sale.privateSaleList(this.users[7].address))
+    ).to.equal(false)
+  })
+
+  it('purchase function fails when private sale buyer trying to buy before sale date', async () => {
+    // Private sale buyer
+    await expect(
+      this.gen2Sale.connect(this.users[6]).purchase()
+    ).to.revertedWith("genSale.purchase: sale didn't start")
+  })
+
   it('purchase function succeeds', async () => {
     // const owner1 = await this.gen2.ownerOf(0)
     // const owner2 = await this.gen2.ownerOf(1)
     // const owner3 = await this.gen2.totalSupply()
 
     
+    // Private sale buyer
+    await advanceTime(5 * 3600 * 24)
+    await this.gen2Sale.connect(this.users[6]).purchase()
+    const privateNewGen2Owner = await this.gen2.ownerOf(340);
+    expect(privateNewGen2Owner).to.equal(this.users[6].address)
+
     // Genesis holder
     await this.gen2Sale.connect(this.users[1]).purchase()
-    const owner = await this.gen2.ownerOf(341);
-    expect(owner).to.equal(this.users[1].address)
-    return
-    
+    const holderNewGen2Owner = await this.gen2.ownerOf(440);
+    expect(holderNewGen2Owner).to.equal(this.users[1].address)
+
     // Whitelist wallet
-    await this.gen2.connect(this.deployer).addWhiteList([this.users[2].address])
-    await this.gen2.connect(this.users[2]).mint(1)
-
-    
-
-    // Private sale buyer
-    await this.gen2.connect(this.users[3]).mint(1)
-    return;
-
-    // Core start
-    for(var i = 0; i < 31; i ++) {
-      await this.gen2.connect(this.deployer).mint(10)
-    }
-    // Core end
-
-    // Founder Shan start
-    await this.gen2.connect(this.deployer).mint(15)
-    // Founder Shan end
-
-    // Founder Jamie start
-    await this.gen2.connect(this.deployer).mint(15)
-    // Founder Jamie end
-
-
-    // const tokenId = await this.gen2.nfts('0xF6f94e2faAb5D415f40a4755860C788df050a37c')
-    // expect(tokenId.toString()).to.equal(new BN("10").toString())
+    await advanceTime(1 * 3600 * 24)
+    await this.gen2Sale.connect(this.users[2]).purchase()
+    const whitelistNewGen2Owner = await this.gen2.ownerOf(1106)
+    expect(whitelistNewGen2Owner).to.equal(this.users[2].address)
   })
+
 
 })

@@ -12,8 +12,7 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
     using SafeMath for uint256;
     
     /// @dev Token Price
-    uint256 immutable priceNumerator = 99;
-    uint256 immutable priceDenominator = 1000;
+    uint256 public constant TOKEN_PRICE_WEI = 99 * 10 ** 15;
 
     /// @dev Genesis address
     address public immutable genesis;
@@ -22,23 +21,42 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
 
     address public constant CORE_TEAM_ADDRESS = 0xC79b099E83f6ECc8242f93d35782562b42c459F3;
 
-    /// @dev token id tracker for private sale buyers  ( #341 ~ #440 )
-    uint256 public privateTokenIdTracker = 341;
+    /// @dev token id tracker for private sale buyers  ( #340 ~ #439 )
+    uint256 public privateTokenIdTracker = 340;
 
-    /// @dev token id tracker for genesis holders   ( #441 ~ #1106 )
-    uint256 public holderTokenIdTracker = 441;
+    /// @dev token id tracker for genesis holders   ( #440 ~ #1105 )
+    uint256 public holderTokenIdTracker = 440;
 
-    /// @dev token id tracker for whitelist wallets    ( #1107 ~ #2853 )
-    uint256 public whitelistTokenIdTracker = 1107;
+    /// @dev token id tracker for whitelist wallets    ( #1106 ~ #2852 )
+    uint256 public whitelistTokenIdTracker = 1106;
+
+    /// @dev token id tracker for free claim wallets    ( #2853 ~ #3332 )
+    uint256 public freeClaimTokenIdTracker = 2853;
 
     /// @dev wallet address => whitelist status
     mapping(address => bool) public whitelist;
 
-    /// @dev wallet address => amount of token
+    /// @dev wallet address => privateSale status
+    mapping(address => bool) public privateSaleList;
+
+
+    /// @dev wallet address => amount of token    (1 pw)
     mapping(address => uint256) public privateSaleBuyers;
+
+    /// @dev wallet address => amount of token    (2 pw)
+    mapping(address => uint256) public genesisHolders;
+
+    /// @dev wallet address => amount of token    (1 pw)
+    mapping(address => uint256) public whitelistUsers;
+
+    /// @dev wallet address => amount of token    (1 pw)
+    mapping(address => uint256) public freeClaimUsers;
 
     event AddedWhitelist(address whitelistWallet);
     event RemovedWhitelist(address whitelistWallet);
+    
+    event AddedPrivateSaleList(address privateSaleBuyer);
+    event RemovedPrivateSaleList(address privateSaleBuyer);
 
     constructor(
       address _genesis,
@@ -53,42 +71,95 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
      * @dev Purchase NFTs
     */
     function purchase() external whenNotPaused nonReentrant payable {
-        uint256 tokenPrice = priceNumerator.div(priceDenominator);
-        console.log(tokenPrice);
         bool genesisHolder = _isGenesisHolder(msg.sender);
         
         /**
         * Private sale buyers
         * Total amount : 100 (1pw)
-        * TokenIds : #341 ~ #440
-        * Start time : 9 Mar 2am ~ --
+        * TokenIds : #340 ~ #439
+        * Start time : 9 Mar 2am ~ --  timestamp : 1646751600
         */
-        if(!whitelist[msg.sender]) {
+        if(privateSaleList[msg.sender]) {
+            require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
+            require(privateTokenIdTracker <= 439, "genSale.purchase: sold out");
+            require(block.timestamp >= 1646751600, "genSale.purchase: sale didn't start");
+            require(privateSaleBuyers[msg.sender] < 1, "genSale.purchase: amount exceed");
             uint256 _privateTokenIdTracker = privateTokenIdTracker;
             IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _privateTokenIdTracker);
             privateTokenIdTracker = _privateTokenIdTracker + 1;
-            console.log("Private sale buyers");
+            privateSaleBuyers[msg.sender] = privateSaleBuyers[msg.sender] + 1;
+
+            // return change if any
+            if (msg.value > TOKEN_PRICE_WEI) {
+                payable(msg.sender).transfer(msg.value - TOKEN_PRICE_WEI);
+            }
+            payable(CORE_TEAM_ADDRESS).transfer(msg.value);
+            console.log("Private sale buyers", privateTokenIdTracker);
         }
 
         /**
         * Genesis Holders 
         * Total amount : 666 (2pw)
-        * TokenIds : #441 ~ #1106
-        * Start time 9 Mar 4am ~ --
+        * TokenIds : #440 ~ #1105 
+        * Start time 9 Mar 4am ~ --   timestamp : 1646758800
         */
-        if(genesisHolder) {
+        else if(genesisHolder) {
+            require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
+            require(holderTokenIdTracker <= 1105, "genSale.purchase: sold out");
+            require(block.timestamp >= 1646758800, "genSale.purchase: sale didn't start");
+            require(genesisHolders[msg.sender] < 2, "genSale.purchase: amount exceed");
+            uint256 _holderTokenIdTracker = holderTokenIdTracker;
+            IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _holderTokenIdTracker);
+            holderTokenIdTracker = _holderTokenIdTracker + 1;
+            genesisHolders[msg.sender] = genesisHolders[msg.sender] + 1;
 
-            console.log("GenesisHolder");
+            // return change if any
+            if (msg.value > TOKEN_PRICE_WEI) {
+                payable(msg.sender).transfer(msg.value - TOKEN_PRICE_WEI);
+            }
+            payable(CORE_TEAM_ADDRESS).transfer(msg.value);
+            console.log("GenesisHolder", holderTokenIdTracker);
         }
 
         /**
         * Whitelist wallets
         * Total amount : 1747 (1pw)
-        * TokenIds : #1107 ~ #2853
-        * Start time 10 Mar 4am ~ 11 Mar 4am
+        * TokenIds : #1106 ~ #2852
+        * Start time 10 Mar 4am ~ 11 Mar 4am   timestamp : 1646845200 ~ 1646931600
         */
-        if(whitelist[msg.sender]) {
-            console.log("Whitelisted");
+        else if(whitelist[msg.sender]) {
+            require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
+            require(whitelistTokenIdTracker <= 2852, "genSale.purchase: sold out");
+            require(block.timestamp >= 1646845200 && block.timestamp <= 1646931600, "genSale.purchase: sale expired");
+            require(whitelistUsers[msg.sender] < 1, "genSale.purchase: amount exceed");
+            uint256 _whitelistTokenIdTracker = whitelistTokenIdTracker;
+            IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _whitelistTokenIdTracker);
+            whitelistTokenIdTracker = _whitelistTokenIdTracker + 1;
+            whitelistUsers[msg.sender] = whitelistUsers[msg.sender] + 1;
+
+            // return change if any
+            if (msg.value > TOKEN_PRICE_WEI) {
+                payable(msg.sender).transfer(msg.value - TOKEN_PRICE_WEI);
+            }
+            payable(CORE_TEAM_ADDRESS).transfer(msg.value);
+            console.log("Whitelisted", whitelistTokenIdTracker);
+        }
+
+        /**
+        * Free claims
+        * Total amount : 480
+        * TokenIds : #2853 ~ #3332
+        * Start time 12 Mar 4am ~ --   timestamp : 1647104400
+        */
+        else if((genesisHolder && genesisHolders[msg.sender] > 0) || _isGen2Holder(msg.sender)) {
+            require(freeClaimTokenIdTracker <= 3332, "genSale.purchase: sold out");
+            require(block.timestamp >= 1647104400, "genSale.purchase: sale didn't start");
+            require(freeClaimUsers[msg.sender] < 1, "genSale.purchase: amount exceed");
+            uint256 _freeClaimTokenIdTracker = freeClaimTokenIdTracker;
+            IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _freeClaimTokenIdTracker);
+            freeClaimTokenIdTracker = _freeClaimTokenIdTracker + 1;
+            freeClaimUsers[msg.sender] = freeClaimUsers[msg.sender] + 1;
+            console.log("Free Claim", freeClaimTokenIdTracker);
         }
     }
 
@@ -99,6 +170,20 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
     */
     function _isGenesisHolder(address _account) private view returns (bool) {
         return IERC721(genesis).balanceOf(_account) > 0;
+    }
+
+
+    /**
+     * @dev Check if wallet address owns any gen2 tokens.
+     * @param _account address
+    */
+    function _isGen2Holder(address _account) private view returns (bool) {
+        for(uint256 i = 340; i < 440; i ++) {
+            if(IERC721(gen2).ownerOf(i) == _account) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -123,6 +208,31 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
             delete whitelist[_accounts[i]];
 
             emit RemovedWhitelist(_accounts[i]);
+        }
+    }
+
+    /**
+     * @dev Add 'private sale list'
+     * @param _accounts array of address
+    */
+    function addPrivateSaleList(address[] memory _accounts) public onlyOwner {
+        for (uint256 i = 0; i < _accounts.length; i++) {
+            require(!whitelist[_accounts[i]], "gen2Sale.addPrivateSaleList: should be not whitelist");
+            privateSaleList[_accounts[i]] = true;
+
+            emit AddedPrivateSaleList(_accounts[i]);
+        }
+    }
+
+    /**
+     * @dev Remove 'private sale list'
+     * @param _accounts array of address
+    */
+    function removePrivateSaleList(address[] memory _accounts) public onlyOwner {
+        for (uint256 i = 0; i < _accounts.length; i++) {
+            delete privateSaleList[_accounts[i]];
+
+            emit RemovedPrivateSaleList(_accounts[i]);
         }
     }
 

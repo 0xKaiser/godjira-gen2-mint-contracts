@@ -1,6 +1,5 @@
 const { expect } = require('chai')
 const { ethers } = require("hardhat")
-const { BN } = require("web3-utils");
 
 describe('Gen2', () => {
   
