@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./whitelist.sol";
 import "hardhat/console.sol";
 
-contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
+contract Gen2Sale is Ownable, Pausable, whitelistAndprivatelistChecker, ReentrancyGuard {
     using SafeMath for uint256;
     
     /// @dev Token Price
