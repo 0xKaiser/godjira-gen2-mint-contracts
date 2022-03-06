@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "hardhat/console.sol";
 
@@ -52,6 +52,17 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
     /// @dev wallet address => amount of token    (1 pw)
     mapping(address => uint256) public freeClaimUsers;
 
+    /// @dev token ID => status
+    mapping(uint256 => bool) public isFreeClaimed;
+
+    struct genesisMintInfo {
+        address originalOwner;
+        bool status;
+    }
+
+    /// @dev token ID => genesisMintInfo
+    mapping(uint256 => genesisMintInfo) public isGenesisMinted;
+
     event AddedWhitelist(address whitelistWallet);
     event RemovedWhitelist(address whitelistWallet);
     
@@ -72,29 +83,29 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
     */
     function purchase() external whenNotPaused nonReentrant payable {
         bool genesisHolder = _isGenesisHolder(msg.sender);
-        
+        uint256 genesisAmount = IERC721(genesis).balanceOf(msg.sender);
         /**
         * Private sale buyers
         * Total amount : 100 (1pw)
         * TokenIds : #340 ~ #439
         * Start time : 9 Mar 2am ~ --  timestamp : 1646751600
         */
-        if(privateSaleList[msg.sender]) {
+        if(privateSaleList[msg.sender] && privateSaleBuyers[msg.sender] < 1) {
             require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
             require(privateTokenIdTracker <= 439, "genSale.purchase: sold out");
             require(block.timestamp >= 1646751600, "genSale.purchase: sale didn't start");
-            require(privateSaleBuyers[msg.sender] < 1, "genSale.purchase: amount exceed");
+            // require(privateSaleBuyers[msg.sender] < 1, "genSale.purchase: amount exceed");
             uint256 _privateTokenIdTracker = privateTokenIdTracker;
             IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _privateTokenIdTracker);
             privateTokenIdTracker = _privateTokenIdTracker + 1;
             privateSaleBuyers[msg.sender] = privateSaleBuyers[msg.sender] + 1;
 
             // return change if any
+            uint256 changeAmount = msg.value.sub(TOKEN_PRICE_WEI);
             if (msg.value > TOKEN_PRICE_WEI) {
-                payable(msg.sender).transfer(msg.value - TOKEN_PRICE_WEI);
+                payable(msg.sender).transfer(changeAmount);
             }
-            payable(CORE_TEAM_ADDRESS).transfer(msg.value);
-            console.log("Private sale buyers", privateTokenIdTracker);
+            payable(CORE_TEAM_ADDRESS).transfer(msg.value.sub(changeAmount));
         }
 
         /**
@@ -103,22 +114,41 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
         * TokenIds : #440 ~ #1105 
         * Start time 9 Mar 4am ~ --   timestamp : 1646758800
         */
-        else if(genesisHolder) {
+        else if(genesisHolder && genesisHolders[msg.sender] < 2*genesisAmount) {
+            uint256 _holderTokenIdTracker = holderTokenIdTracker;
+
+            for(uint256 i = 0; i < genesisAmount; i++ ) {
+                uint256 genesisTokenId = IERC721Enumerable(genesis).tokenByIndex(i);
+                require(
+                    (isGenesisMinted[genesisTokenId].originalOwner == msg.sender && isGenesisMinted[genesisTokenId].status == true ) ||
+                    isGenesisMinted[genesisTokenId].status == false, 
+                    "genSale.purchase: has already been used to mint"
+                );
+            }
+
             require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
             require(holderTokenIdTracker <= 1105, "genSale.purchase: sold out");
             require(block.timestamp >= 1646758800, "genSale.purchase: sale didn't start");
-            require(genesisHolders[msg.sender] < 2, "genSale.purchase: amount exceed");
-            uint256 _holderTokenIdTracker = holderTokenIdTracker;
+            // require(genesisHolders[msg.sender] < 2*genesisAmount, "genSale.purchase: amount exceed");
             IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _holderTokenIdTracker);
             holderTokenIdTracker = _holderTokenIdTracker + 1;
             genesisHolders[msg.sender] = genesisHolders[msg.sender] + 1;
 
-            // return change if any
-            if (msg.value > TOKEN_PRICE_WEI) {
-                payable(msg.sender).transfer(msg.value - TOKEN_PRICE_WEI);
+            if(genesisHolders[msg.sender] > 0 && genesisHolders[msg.sender].mod(2) == 0) {
+                uint256 index = genesisHolders[msg.sender].div(2).sub(1);
+                uint256 genesisTokenId = IERC721Enumerable(genesis).tokenByIndex(index);
+                isGenesisMinted[genesisTokenId] = genesisMintInfo({
+                    originalOwner: msg.sender,
+                    status: true
+                });
             }
-            payable(CORE_TEAM_ADDRESS).transfer(msg.value);
-            console.log("GenesisHolder", holderTokenIdTracker);
+
+            // return change if any
+            uint256 changeAmount = msg.value.sub(TOKEN_PRICE_WEI);
+            if (msg.value > TOKEN_PRICE_WEI) {
+                payable(msg.sender).transfer(changeAmount);
+            }
+            payable(CORE_TEAM_ADDRESS).transfer(msg.value.sub(changeAmount));
         }
 
         /**
@@ -127,22 +157,22 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
         * TokenIds : #1106 ~ #2852
         * Start time 10 Mar 4am ~ 11 Mar 4am   timestamp : 1646845200 ~ 1646931600
         */
-        else if(whitelist[msg.sender]) {
+        else if(whitelist[msg.sender] && whitelistUsers[msg.sender] < 1) {
             require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
             require(whitelistTokenIdTracker <= 2852, "genSale.purchase: sold out");
             require(block.timestamp >= 1646845200 && block.timestamp <= 1646931600, "genSale.purchase: sale expired");
-            require(whitelistUsers[msg.sender] < 1, "genSale.purchase: amount exceed");
+            // require(whitelistUsers[msg.sender] < 1, "genSale.purchase: amount exceed");
             uint256 _whitelistTokenIdTracker = whitelistTokenIdTracker;
             IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _whitelistTokenIdTracker);
             whitelistTokenIdTracker = _whitelistTokenIdTracker + 1;
             whitelistUsers[msg.sender] = whitelistUsers[msg.sender] + 1;
 
             // return change if any
+            uint256 changeAmount = msg.value.sub(TOKEN_PRICE_WEI);
             if (msg.value > TOKEN_PRICE_WEI) {
-                payable(msg.sender).transfer(msg.value - TOKEN_PRICE_WEI);
+                payable(msg.sender).transfer(changeAmount);
             }
-            payable(CORE_TEAM_ADDRESS).transfer(msg.value);
-            console.log("Whitelisted", whitelistTokenIdTracker);
+            payable(CORE_TEAM_ADDRESS).transfer(msg.value.sub(changeAmount));
         }
 
         /**
@@ -151,15 +181,16 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
         * TokenIds : #2853 ~ #3332
         * Start time 12 Mar 4am ~ --   timestamp : 1647104400
         */
-        else if((genesisHolder && genesisHolders[msg.sender] > 0) || _isGen2Holder(msg.sender)) {
+        else if((genesisHolder && genesisHolders[msg.sender] == 2*genesisAmount) || _isGen2Holder(msg.sender)) {
+            uint256 _freeClaimTokenIdTracker = freeClaimTokenIdTracker;
+            require(isFreeClaimed[freeClaimTokenIdTracker] == false, "genSale.purchase: has already been used to claim");
             require(freeClaimTokenIdTracker <= 3332, "genSale.purchase: sold out");
             require(block.timestamp >= 1647104400, "genSale.purchase: sale didn't start");
             require(freeClaimUsers[msg.sender] < 1, "genSale.purchase: amount exceed");
-            uint256 _freeClaimTokenIdTracker = freeClaimTokenIdTracker;
             IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _freeClaimTokenIdTracker);
+            isFreeClaimed[_freeClaimTokenIdTracker] = true;
             freeClaimTokenIdTracker = _freeClaimTokenIdTracker + 1;
             freeClaimUsers[msg.sender] = freeClaimUsers[msg.sender] + 1;
-            console.log("Free Claim", freeClaimTokenIdTracker);
         }
     }
 
