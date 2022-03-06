@@ -15,12 +15,12 @@ describe.only('Gen2Sale', () => {
 
     this.whitelist = [
       {
-        'whiteListAddress' : this.users[2],
+        'whiteListAddress' : this.users[2].address,
         'isPrivateListed': true,
         'signature': "Gensis2Sale"
       },
       {
-        'whiteListAddress' : this.users[3],
+        'whiteListAddress' : this.users[3].address,
         'isPrivateListed': false,
         'signature': "Gensis2Sale"
       }
@@ -35,11 +35,11 @@ describe.only('Gen2Sale', () => {
     const gen2 = await ethers.getContractFactory('Gen2')
     this.gen2 = await gen2.deploy("gen2", "gen2", this.tokenUri)
 
-    const gen2Sale = await ethers.getContractFactory('Gen2Sale')
-    this.gen2Sale = await gen2Sale.deploy(this.gen2.address, this.genesis.address)
+    const gen2Sales = await ethers.getContractFactory('Gen2Sales')
+    this.gen2Sales = await gen2Sales.deploy(this.gen2.address, this.genesis.address)
 
-    // Set Gen2Sale address
-    this.gen2.connect(this.deployer).setGen2Sale(this.gen2Sale.address)
+    // Gen2Sale : Set Signer
+    this.gen2Sales.connect(this.deployer).modifySigner("Gensis2Sale")
 
     await this.genesis.connect(this.deployer).mint([10, 20])
     await this.mockNFT.connect(this.deployer).mint(this.users[1].address, 10)
@@ -48,11 +48,10 @@ describe.only('Gen2Sale', () => {
     await this.mockNFT.connect(this.users[1]).setApprovalForAll(this.genesis.address, true)
     await this.genesis.connect(this.users[1]).claim([10, 20])
 
-    this.gen2Sale.connect(this.deployer).modifySigner("Gensis2Sale");
   })
 
   it('privateSale function succeeds', async () => {
-    await this.gen2Sale.connect(this.deployer).privateSale(this.whitelist)
+    await this.gen2Sales.connect(this.deployer).privateSale(this.whitelist)
   })
     
     return;
