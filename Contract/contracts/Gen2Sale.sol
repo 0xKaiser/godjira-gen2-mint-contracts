@@ -39,7 +39,7 @@ contract Gen2Sales is Ownable,whitelistChecker{
 
     bool public isPaused;
 
-    constructor(address _godjira2,address _godjira1) {
+    constructor(address _godjira2, address _godjira1) {
         Godjira2 = IERC721(_godjira2);
         Godjira1 = IERC721(_godjira1);
     }
@@ -51,15 +51,15 @@ contract Gen2Sales is Ownable,whitelistChecker{
     //Region 1 - Sales
 
     function privateSale(whitelisted memory whitelist) external payable isNotPaused{
-        require(getSigner(whitelist) == designatedSigner,"Invalid signature");
-        require(msg.sender == whitelist.whiteListAddress,"not same user");
-        require(whitelist.isPrivateListed,"is not private listed");
-        require(!privateBought[msg.sender],"Already bought");
-        require(block.timestamp > PRIVATE_TIME,"Sale not started");
-        require(msg.value >= PRICE,"Paying too low");
+        require(getSigner(whitelist) == designatedSigner, "Invalid signature");
+        require(msg.sender == whitelist.whiteListAddress, "not same user");
+        require(whitelist.isPrivateListed, "is not private listed");
+        require(!privateBought[msg.sender], "Already bought");
+        require(block.timestamp > PRIVATE_TIME, "Sale not started");
+        require(msg.value >= PRICE, "Paying too low");
 
         privateBought[msg.sender] = true;
-        Godjira2.safeTransferFrom(CORE_TEAM_ADDRESS,msg.sender,privateSaleTracker);
+        Godjira2.safeTransferFrom(CORE_TEAM_ADDRESS, msg.sender, privateSaleTracker);
         privateSaleTracker++;
     }
 

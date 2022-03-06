@@ -3,6 +3,7 @@ const { ethers } = require("hardhat")
 const { advanceTime } = require('./utils')
 
 const tokenPrice = ethers.utils.parseUnits('0.0999', 18);
+
 describe.only('Gen2Sale', () => {
   
   before(async () => {
@@ -11,6 +12,19 @@ describe.only('Gen2Sale', () => {
     this.tokenUri = "https://gladiators-metadata-api.herokuapp.com/api/token"
     this.deployer = users[0]
     this.users = users.slice(1)
+
+    this.whitelist = [
+      {
+        'whiteListAddress' : this.users[2],
+        'isPrivateListed': true,
+        'signature': "Gensis2Sale"
+      },
+      {
+        'whiteListAddress' : this.users[3],
+        'isPrivateListed': false,
+        'signature': "Gensis2Sale"
+      }
+    ]
 
     const genesis = await ethers.getContractFactory('Genesis')
     const mockNFT = await ethers.getContractFactory('MockNFT')
@@ -22,7 +36,7 @@ describe.only('Gen2Sale', () => {
     this.gen2 = await gen2.deploy("gen2", "gen2", this.tokenUri)
 
     const gen2Sale = await ethers.getContractFactory('Gen2Sale')
-    this.gen2Sale = await gen2Sale.deploy(this.genesis.address, this.gen2.address)
+    this.gen2Sale = await gen2Sale.deploy(this.gen2.address, this.genesis.address)
 
     // Set Gen2Sale address
     this.gen2.connect(this.deployer).setGen2Sale(this.gen2Sale.address)
@@ -33,14 +47,15 @@ describe.only('Gen2Sale', () => {
 
     await this.mockNFT.connect(this.users[1]).setApprovalForAll(this.genesis.address, true)
     await this.genesis.connect(this.users[1]).claim([10, 20])
+
+    this.gen2Sale.connect(this.deployer).modifySigner("Gensis2Sale");
   })
 
-  it('addWhiteList function fails', async () => {
-    await expect(this.gen2Sale.connect(this.deployer).addWhiteList(
-      [this.users[1].address]
-    )).to.revertedWith('gen2Sale.addWhiteList: should be not genesis holder')
+  it('privateSale function succeeds', async () => {
+    await this.gen2Sale.connect(this.deployer).privateSale(this.whitelist)
   })
-
+    
+    return;
   it('addWhiteList function succeeds', async () => {
     await this.gen2Sale.connect(this.deployer).addWhiteList([this.users[2].address, this.users[8].address])
     expect(
