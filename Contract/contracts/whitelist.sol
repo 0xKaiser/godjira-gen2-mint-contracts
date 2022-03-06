@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
-contract whitelistAndprivatelistChecker is EIP712{
+contract whitelistChecker is EIP712{
 
     string private constant SIGNING_DOMAIN = "Godjira";
     string private constant SIGNATURE_VERSION = "1";

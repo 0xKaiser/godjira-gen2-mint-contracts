@@ -1,279 +1,127 @@
-//SPDX-License-Identifier: MIT
+//SPDX-License-Identifier: UNLICENSED
+
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./whitelist.sol";
-import "hardhat/console.sol";
 
-contract Gen2Sale is Ownable, Pausable, whitelistAndprivatelistChecker, ReentrancyGuard {
-    using SafeMath for uint256;
-    
-    /// @dev Token Price
-    uint256 public constant TOKEN_PRICE_WEI = 99 * 10 ** 15;
+contract Gen2Sales is Ownable,whitelistChecker{
 
-    /// @dev Genesis address
-    address public immutable genesis;
-    /// @dev Gene2 address
-    address public immutable gen2;
+    IERC721 Godjira2;
+    IERC721 Godjira1;
+    address CORE_TEAM_ADDRESS; //TODO : Set Address
+    address designatedSigner; //TODO : Set Address
 
-    address public constant CORE_TEAM_ADDRESS = 0xC79b099E83f6ECc8242f93d35782562b42c459F3;
+    uint PRICE = 0.099 ether;
 
-    /// @dev token id tracker for private sale buyers  ( #340 ~ #439 )
-    uint256 public privateTokenIdTracker = 340;
+    //TIMES - TODO Get Epoch Time
+    uint PRIVATE_TIME;
+    uint HOLDERS_TIME;
+    uint WHITELIST_TIME;
+    uint CLAIM_TIME;
 
-    /// @dev token id tracker for genesis holders   ( #440 ~ #1105 )
-    uint256 public holderTokenIdTracker = 440;
+    //TOKEN TRACKERS
+    uint16 public privateSaleTracker = 340; //340-439
+    uint16 public genesisSaleTracker = 440; //440-1105
+    uint16 public whitelistSaleTracker = 1106; //1106-2852
 
-    /// @dev token id tracker for whitelist wallets    ( #1106 ~ #2852 )
-    uint256 public whitelistTokenIdTracker = 1106;
+    uint16 public claimTracker = 2853; //2853-3332
 
-    /// @dev token id tracker for free claim wallets    ( #2853 ~ #3332 )
-    uint256 public freeClaimTokenIdTracker = 2853;
+    //SALE MAPPINGS
+    mapping(address=>bool) public privateBought; //privatelisted > has bought
+    mapping(uint=>bool) public genesisBought; //genesis token > has bought
+    mapping(address=>bool) public whitelistBought; //whitelisted > has bought
 
-    /// @dev wallet address => whitelist status
-    mapping(address => bool) public whitelist;
+    //CLAIM MAPPINGS
+    mapping(uint=>bool) public genesisClaimed; //genesis token > has claimed
+    mapping(uint=>bool) public gen2Claimed; //gen 2 token > has claimed
 
-    /// @dev wallet address => privateSale status
-    mapping(address => bool) public privateSaleList;
-
-
-    /// @dev wallet address => amount of token    (1 pw)
-    mapping(address => uint256) public privateSaleBuyers;
-
-    /// @dev wallet address => amount of token    (2 pw)
-    mapping(address => uint256) public genesisHolders;
-
-    /// @dev wallet address => amount of token    (1 pw)
-    mapping(address => uint256) public whitelistUsers;
-
-    /// @dev wallet address => amount of token    (1 pw)
-    mapping(address => uint256) public freeClaimUsers;
-
-    /// @dev token ID => status
-    mapping(uint256 => bool) public isFreeClaimed;
-
-    struct genesisMintInfo {
-        address originalOwner;
-        bool status;
+    constructor(address _godjira2,address _godjira1) {
+        Godjira2 = IERC721(_godjira2);
+        Godjira1 = IERC721(_godjira1);
     }
 
-    /// @dev token ID => genesisMintInfo
-    mapping(uint256 => genesisMintInfo) public isGenesisMinted;
+    //Region 1 - Sales
 
-    event AddedWhitelist(address whitelistWallet);
-    event RemovedWhitelist(address whitelistWallet);
-    
-    event AddedPrivateSaleList(address privateSaleBuyer);
-    event RemovedPrivateSaleList(address privateSaleBuyer);
+    function privateSale(whitelisted memory whitelist) external payable{
+        require(getSigner(whitelist) == designatedSigner,"Invalid signature");
+        require(msg.sender == whitelist.whiteListAddress,"not same user");
+        require(whitelist.isPrivateListed,"is not private listed");
+        require(!privateBought[msg.sender],"Already bought");
+        require(block.timestamp > PRIVATE_TIME,"Sale not started");
+        require(msg.value >= PRICE,"Paying too low");
 
-    constructor(
-      address _genesis,
-      address _gen2 
-    ) {
-        require(_genesis != address(0) && _gen2 != address(0), "gen2Sale: Invalid address");
-        genesis = _genesis;
-        gen2 = _gen2;
+        privateBought[msg.sender] = true;
+        Godjira2.transferFrom(CORE_TEAM_ADDRESS,msg.sender,privateSaleTracker);
+        privateSaleTracker++;
     }
 
-    /**
-     * @dev Purchase NFTs
-    */
-    function purchase() external whenNotPaused nonReentrant payable {
-        bool genesisHolder = _isGenesisHolder(msg.sender);
-        uint256 genesisAmount = IERC721(genesis).balanceOf(msg.sender);
-        /**
-        * Private sale buyers
-        * Total amount : 100 (1pw)
-        * TokenIds : #340 ~ #439
-        * Start time : 9 Mar 2am ~ --  timestamp : 1646751600
-        */
-        if(privateSaleList[msg.sender] && privateSaleBuyers[msg.sender] < 1) {
-            require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
-            require(privateTokenIdTracker <= 439, "genSale.purchase: sold out");
-            require(block.timestamp >= 1646751600, "genSale.purchase: sale didn't start");
-            // require(privateSaleBuyers[msg.sender] < 1, "genSale.purchase: amount exceed");
-            uint256 _privateTokenIdTracker = privateTokenIdTracker;
-            IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _privateTokenIdTracker);
-            privateTokenIdTracker = _privateTokenIdTracker + 1;
-            privateSaleBuyers[msg.sender] = privateSaleBuyers[msg.sender] + 1;
+    function whitelistSale(whitelisted memory whitelist) external payable{
+        require(getSigner(whitelist) == designatedSigner,"Invalid signature");
+        require(msg.sender == whitelist.whiteListAddress,"not same user");
+        require(!whitelist.isPrivateListed,"is private listed");
+        require(!whitelistBought[msg.sender],"Already bought");
+        require(block.timestamp > WHITELIST_TIME && block.timestamp < WHITELIST_TIME + 1 days,"Sale not started or has ended");
+        require(msg.value >= PRICE,"Paying too low");
 
-            // return change if any
-            uint256 changeAmount = msg.value.sub(TOKEN_PRICE_WEI);
-            if (msg.value > TOKEN_PRICE_WEI) {
-                payable(msg.sender).transfer(changeAmount);
-            }
-            payable(CORE_TEAM_ADDRESS).transfer(msg.value.sub(changeAmount));
-        }
+        whitelistBought[msg.sender] = true;
+        Godjira2.transferFrom(CORE_TEAM_ADDRESS,msg.sender,whitelistSaleTracker);
+        whitelistSaleTracker++;
+    }
 
-        /**
-        * Genesis Holders 
-        * Total amount : 666 (2pw)
-        * TokenIds : #440 ~ #1105 
-        * Start time 9 Mar 4am ~ --   timestamp : 1646758800
-        */
-        else if(genesisHolder && genesisHolders[msg.sender] < 2*genesisAmount) {
-            uint256 _holderTokenIdTracker = holderTokenIdTracker;
 
-            for(uint256 i = 0; i < genesisAmount; i++ ) {
-                uint256 genesisTokenId = IERC721Enumerable(genesis).tokenByIndex(i);
-                require(
-                    (isGenesisMinted[genesisTokenId].originalOwner == msg.sender && isGenesisMinted[genesisTokenId].status == true ) ||
-                    isGenesisMinted[genesisTokenId].status == false, 
-                    "genSale.purchase: has already been used to mint"
-                );
-            }
+    function genesisSale(uint[] memory tokenId) external payable{
+        require(block.timestamp > HOLDERS_TIME,"Sale not started");
+        require(msg.value >= PRICE*tokenId.length,"Paying too low");
+        for(uint i=0;i<tokenId.length;i++){
+            require(Godjira1.ownerOf(tokenId[i]) == msg.sender,"Sender not owner");
+            require(!genesisBought[tokenId[i]],"Already bought");
 
-            require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
-            require(holderTokenIdTracker <= 1105, "genSale.purchase: sold out");
-            require(block.timestamp >= 1646758800, "genSale.purchase: sale didn't start");
-            // require(genesisHolders[msg.sender] < 2*genesisAmount, "genSale.purchase: amount exceed");
-            IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _holderTokenIdTracker);
-            holderTokenIdTracker = _holderTokenIdTracker + 1;
-            genesisHolders[msg.sender] = genesisHolders[msg.sender] + 1;
-
-            if(genesisHolders[msg.sender] > 0 && genesisHolders[msg.sender].mod(2) == 0) {
-                uint256 index = genesisHolders[msg.sender].div(2).sub(1);
-                uint256 genesisTokenId = IERC721Enumerable(genesis).tokenByIndex(index);
-                isGenesisMinted[genesisTokenId] = genesisMintInfo({
-                    originalOwner: msg.sender,
-                    status: true
-                });
-            }
-
-            // return change if any
-            uint256 changeAmount = msg.value.sub(TOKEN_PRICE_WEI);
-            if (msg.value > TOKEN_PRICE_WEI) {
-                payable(msg.sender).transfer(changeAmount);
-            }
-            payable(CORE_TEAM_ADDRESS).transfer(msg.value.sub(changeAmount));
-        }
-
-        /**
-        * Whitelist wallets
-        * Total amount : 1747 (1pw)
-        * TokenIds : #1106 ~ #2852
-        * Start time 10 Mar 4am ~ 11 Mar 4am   timestamp : 1646845200 ~ 1646931600
-        */
-        else if(whitelist[msg.sender] && whitelistUsers[msg.sender] < 1) {
-            require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
-            require(whitelistTokenIdTracker <= 2852, "genSale.purchase: sold out");
-            require(block.timestamp >= 1646845200 && block.timestamp <= 1646931600, "genSale.purchase: sale expired");
-            // require(whitelistUsers[msg.sender] < 1, "genSale.purchase: amount exceed");
-            uint256 _whitelistTokenIdTracker = whitelistTokenIdTracker;
-            IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _whitelistTokenIdTracker);
-            whitelistTokenIdTracker = _whitelistTokenIdTracker + 1;
-            whitelistUsers[msg.sender] = whitelistUsers[msg.sender] + 1;
-
-            // return change if any
-            uint256 changeAmount = msg.value.sub(TOKEN_PRICE_WEI);
-            if (msg.value > TOKEN_PRICE_WEI) {
-                payable(msg.sender).transfer(changeAmount);
-            }
-            payable(CORE_TEAM_ADDRESS).transfer(msg.value.sub(changeAmount));
-        }
-
-        /**
-        * Free claims
-        * Total amount : 480
-        * TokenIds : #2853 ~ #3332
-        * Start time 12 Mar 4am ~ --   timestamp : 1647104400
-        */
-        else if((genesisHolder && genesisHolders[msg.sender] == 2*genesisAmount) || _isGen2Holder(msg.sender)) {
-            uint256 _freeClaimTokenIdTracker = freeClaimTokenIdTracker;
-            require(isFreeClaimed[freeClaimTokenIdTracker] == false, "genSale.purchase: has already been used to claim");
-            require(freeClaimTokenIdTracker <= 3332, "genSale.purchase: sold out");
-            require(block.timestamp >= 1647104400, "genSale.purchase: sale didn't start");
-            require(freeClaimUsers[msg.sender] < 1, "genSale.purchase: amount exceed");
-            IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _freeClaimTokenIdTracker);
-            isFreeClaimed[_freeClaimTokenIdTracker] = true;
-            freeClaimTokenIdTracker = _freeClaimTokenIdTracker + 1;
-            freeClaimUsers[msg.sender] = freeClaimUsers[msg.sender] + 1;
+            genesisBought[tokenId[i]] = true;
+            Godjira2.transferFrom(CORE_TEAM_ADDRESS,msg.sender,genesisSaleTracker);
+            Godjira2.transferFrom(CORE_TEAM_ADDRESS,msg.sender,genesisSaleTracker+1);
+            genesisSaleTracker += 2;
         }
     }
 
-    
-    /**
-     * @dev Check if wallet address owns any genesis tokens.
-     * @param _account address
-    */
-    function _isGenesisHolder(address _account) private view returns (bool) {
-        return IERC721(genesis).balanceOf(_account) > 0;
-    }
+    // Region 2 - Claims
 
+    function genesisClaim(uint[] memory tokenId) external {
+        require(block.timestamp > CLAIM_TIME,"Claims not started");
+        for(uint i=0;i<tokenId.length;i++){
+            require(Godjira1.ownerOf(tokenId[i])==msg.sender,"Sender not owner");
+            require(!genesisClaimed[tokenId[i]],"Already claimed");
 
-    /**
-     * @dev Check if wallet address owns any gen2 tokens.
-     * @param _account address
-    */
-    function _isGen2Holder(address _account) private view returns (bool) {
-        for(uint256 i = 340; i < 440; i ++) {
-            if(IERC721(gen2).ownerOf(i) == _account) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @dev Add 'whitelist'
-     * @param _accounts array of address
-    */
-    function addWhiteList(address[] memory _accounts) public onlyOwner {
-        for (uint256 i = 0; i < _accounts.length; i++) {
-            require(!_isGenesisHolder(_accounts[i]), "gen2Sale.addWhiteList: should be not genesis holder");
-            whitelist[_accounts[i]] = true;
-
-            emit AddedWhitelist(_accounts[i]);
+            genesisClaimed[tokenId[i]] = true;
+            Godjira2.transferFrom(CORE_TEAM_ADDRESS,msg.sender,claimTracker);
+            claimTracker++;
         }
     }
 
-    /**
-     * @dev Remove 'whitelist'
-     * @param _accounts array of address
-    */
-    function removeWhiteList(address[] memory _accounts) public onlyOwner {
-        for (uint256 i = 0; i < _accounts.length; i++) {
-            delete whitelist[_accounts[i]];
+    function privateSalesClaim(uint[] memory tokenId) external{
+        require(block.timestamp > CLAIM_TIME,"Claims not started");
+        for(uint i=0;i<tokenId.length;i++){
+            require(tokenId[i] >= 340 && tokenId[i] <= 439,"not valid token");
+            require(Godjira2.ownerOf(tokenId[i])==msg.sender,"Sender not owner");
+            require(!gen2Claimed[tokenId[i]],"Already claimed");
 
-            emit RemovedWhitelist(_accounts[i]);
+            gen2Claimed[tokenId[i]] = true;
+            Godjira2.transferFrom(CORE_TEAM_ADDRESS,msg.sender,claimTracker);
+            claimTracker++;
         }
     }
 
-    /**
-     * @dev Add 'private sale list'
-     * @param _accounts array of address
-    */
-    function addPrivateSaleList(address[] memory _accounts) public onlyOwner {
-        for (uint256 i = 0; i < _accounts.length; i++) {
-            require(!whitelist[_accounts[i]], "gen2Sale.addPrivateSaleList: should be not whitelist");
-            privateSaleList[_accounts[i]] = true;
-
-            emit AddedPrivateSaleList(_accounts[i]);
-        }
+    function modifyGodjira2(address _godjira) external onlyOwner{
+        Godjira2 = IERC721(_godjira);
     }
 
-    /**
-     * @dev Remove 'private sale list'
-     * @param _accounts array of address
-    */
-    function removePrivateSaleList(address[] memory _accounts) public onlyOwner {
-        for (uint256 i = 0; i < _accounts.length; i++) {
-            delete privateSaleList[_accounts[i]];
-
-            emit RemovedPrivateSaleList(_accounts[i]);
-        }
+    function modifyGodjira1(address _godjira) external onlyOwner{
+        Godjira1 = IERC721(_godjira);
     }
 
-    function pause() external onlyOwner {
-        super._pause();
-    }
-
-    function unpause() external onlyOwner {
-        super._unpause();
+    function modifySigner(address _signer) external onlyOwner{
+        designatedSigner = _signer;
     }
 
 }
