@@ -1,4 +1,5 @@
 //SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -6,9 +7,10 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./whitelistContract.sol";
 import "hardhat/console.sol";
 
-contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
+contract Gen2Sale is Ownable, Pausable, whitelistAndprivatelistChecker, ReentrancyGuard {
     using SafeMath for uint256;
     
     /// @dev Token Price
@@ -18,6 +20,10 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
     address public immutable genesis;
     /// @dev Gene2 address
     address public immutable gen2;
+
+    address public designatedWhitelistSigner;
+
+    address public designatePrivatelistSigner;
 
     address public constant CORE_TEAM_ADDRESS = 0xC79b099E83f6ECc8242f93d35782562b42c459F3;
 
@@ -32,9 +38,6 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
 
     /// @dev token id tracker for free claim wallets    ( #2853 ~ #3332 )
     uint256 public freeClaimTokenIdTracker = 2853;
-
-    /// @dev wallet address => whitelist status
-    mapping(address => bool) public whitelist;
 
     /// @dev wallet address => privateSale status
     mapping(address => bool) public privateSaleList;
@@ -67,19 +70,47 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
         gen2 = _gen2;
     }
 
-    /**
-     * @dev Purchase NFTs
+
+    /* Whitelist purchase
+    *@dev Purchase whitelisted NFT
     */
-    function purchase() external whenNotPaused nonReentrant payable {
-        bool genesisHolder = _isGenesisHolder(msg.sender);
+    function purchaseWhitelistedNft(whitelisted memory whitelist) external whenNotPaused nonReentrant payable {
+         /**
+        * Whitelist wallets
+        * Total amount : 1747 (1pw)
+        * TokenIds : #1106 ~ #2852
+        * Start time 10 Mar 4am ~ 11 Mar 4am   timestamp : 1646845200 ~ 1646931600
+        */
+            require (getSigner(whitelist) == designatedWhitelistSigner,"Not valid user");
+            require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
+            require(whitelistTokenIdTracker <= 2852, "genSale.purchase: sold out");
+            require(block.timestamp >= 1646845200 && block.timestamp <= 1646931600, "genSale.purchase: sale expired");
+            require(whitelistUsers[msg.sender] < 1, "genSale.purchase: amount exceed");
+            uint256 _whitelistTokenIdTracker = whitelistTokenIdTracker;
+            IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _whitelistTokenIdTracker);
+            whitelistTokenIdTracker = _whitelistTokenIdTracker + 1;
+            whitelistUsers[msg.sender] = whitelistUsers[msg.sender] + 1;
+
+            // return change if any
+            if (msg.value > TOKEN_PRICE_WEI) {
+                payable(msg.sender).transfer(msg.value - TOKEN_PRICE_WEI);
+            }
+            payable(CORE_TEAM_ADDRESS).transfer(msg.value);
+            console.log("Whitelisted", whitelistTokenIdTracker);
         
-        /**
+    }
+
+    /**
+    *@dev Purchase PrivateSale NFTs
+     */
+    function privateSalePurchase(privatelisted memory privateList) external whenNotPaused nonReentrant payable {
+      /**
         * Private sale buyers
         * Total amount : 100 (1pw)
         * TokenIds : #340 ~ #439
         * Start time : 9 Mar 2am ~ --  timestamp : 1646751600
         */
-        if(privateSaleList[msg.sender]) {
+            require (getPrivateSigner(privateList)==designatePrivatelistSigner, "User not in private List");
             require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
             require(privateTokenIdTracker <= 439, "genSale.purchase: sold out");
             require(block.timestamp >= 1646751600, "genSale.purchase: sale didn't start");
@@ -95,15 +126,21 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
             }
             payable(CORE_TEAM_ADDRESS).transfer(msg.value);
             console.log("Private sale buyers", privateTokenIdTracker);
-        }
+    }
 
+
+    /**
+     * @dev Purchase NFTs
+    */
+    function purchase() external whenNotPaused nonReentrant payable {
+        bool genesisHolder = _isGenesisHolder(msg.sender);
         /**
         * Genesis Holders 
         * Total amount : 666 (2pw)
         * TokenIds : #440 ~ #1105 
         * Start time 9 Mar 4am ~ --   timestamp : 1646758800
         */
-        else if(genesisHolder) {
+        if(genesisHolder) {
             require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
             require(holderTokenIdTracker <= 1105, "genSale.purchase: sold out");
             require(block.timestamp >= 1646758800, "genSale.purchase: sale didn't start");
@@ -121,29 +158,7 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
             console.log("GenesisHolder", holderTokenIdTracker);
         }
 
-        /**
-        * Whitelist wallets
-        * Total amount : 1747 (1pw)
-        * TokenIds : #1106 ~ #2852
-        * Start time 10 Mar 4am ~ 11 Mar 4am   timestamp : 1646845200 ~ 1646931600
-        */
-        else if(whitelist[msg.sender]) {
-            require(msg.value >= TOKEN_PRICE_WEI, "genSale.purchase: Insufficient funds");
-            require(whitelistTokenIdTracker <= 2852, "genSale.purchase: sold out");
-            require(block.timestamp >= 1646845200 && block.timestamp <= 1646931600, "genSale.purchase: sale expired");
-            require(whitelistUsers[msg.sender] < 1, "genSale.purchase: amount exceed");
-            uint256 _whitelistTokenIdTracker = whitelistTokenIdTracker;
-            IERC721(gen2).transferFrom(CORE_TEAM_ADDRESS, msg.sender, _whitelistTokenIdTracker);
-            whitelistTokenIdTracker = _whitelistTokenIdTracker + 1;
-            whitelistUsers[msg.sender] = whitelistUsers[msg.sender] + 1;
-
-            // return change if any
-            if (msg.value > TOKEN_PRICE_WEI) {
-                payable(msg.sender).transfer(msg.value - TOKEN_PRICE_WEI);
-            }
-            payable(CORE_TEAM_ADDRESS).transfer(msg.value);
-            console.log("Whitelisted", whitelistTokenIdTracker);
-        }
+       
 
         /**
         * Free claims
@@ -151,6 +166,7 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
         * TokenIds : #2853 ~ #3332
         * Start time 12 Mar 4am ~ --   timestamp : 1647104400
         */
+
         else if((genesisHolder && genesisHolders[msg.sender] > 0) || _isGen2Holder(msg.sender)) {
             require(freeClaimTokenIdTracker <= 3332, "genSale.purchase: sold out");
             require(block.timestamp >= 1647104400, "genSale.purchase: sale didn't start");
@@ -168,7 +184,7 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
      * @dev Check if wallet address owns any genesis tokens.
      * @param _account address
     */
-    function _isGenesisHolder(address _account) private view returns (bool) {
+    function _isGenesisHolder(address _account) internal view returns (bool) {
         return IERC721(genesis).balanceOf(_account) > 0;
     }
 
@@ -177,63 +193,13 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
      * @dev Check if wallet address owns any gen2 tokens.
      * @param _account address
     */
-    function _isGen2Holder(address _account) private view returns (bool) {
+    function _isGen2Holder(address _account) internal view returns (bool) {
         for(uint256 i = 340; i < 440; i ++) {
             if(IERC721(gen2).ownerOf(i) == _account) {
                 return true;
             }
         }
         return false;
-    }
-
-    /**
-     * @dev Add 'whitelist'
-     * @param _accounts array of address
-    */
-    function addWhiteList(address[] memory _accounts) public onlyOwner {
-        for (uint256 i = 0; i < _accounts.length; i++) {
-            require(!_isGenesisHolder(_accounts[i]), "gen2Sale.addWhiteList: should be not genesis holder");
-            whitelist[_accounts[i]] = true;
-
-            emit AddedWhitelist(_accounts[i]);
-        }
-    }
-
-    /**
-     * @dev Remove 'whitelist'
-     * @param _accounts array of address
-    */
-    function removeWhiteList(address[] memory _accounts) public onlyOwner {
-        for (uint256 i = 0; i < _accounts.length; i++) {
-            delete whitelist[_accounts[i]];
-
-            emit RemovedWhitelist(_accounts[i]);
-        }
-    }
-
-    /**
-     * @dev Add 'private sale list'
-     * @param _accounts array of address
-    */
-    function addPrivateSaleList(address[] memory _accounts) public onlyOwner {
-        for (uint256 i = 0; i < _accounts.length; i++) {
-            require(!whitelist[_accounts[i]], "gen2Sale.addPrivateSaleList: should be not whitelist");
-            privateSaleList[_accounts[i]] = true;
-
-            emit AddedPrivateSaleList(_accounts[i]);
-        }
-    }
-
-    /**
-     * @dev Remove 'private sale list'
-     * @param _accounts array of address
-    */
-    function removePrivateSaleList(address[] memory _accounts) public onlyOwner {
-        for (uint256 i = 0; i < _accounts.length; i++) {
-            delete privateSaleList[_accounts[i]];
-
-            emit RemovedPrivateSaleList(_accounts[i]);
-        }
     }
 
     function pause() external onlyOwner {
@@ -244,4 +210,8 @@ contract Gen2Sale is Ownable, Pausable, ReentrancyGuard {
         super._unpause();
     }
 
+    function setDesignatedSigners(address _whitelistSigner, address _privatelistSigner) external onlyOwner {
+        designatedWhitelistSigner = _whitelistSigner;
+        designatePrivatelistSigner = _privatelistSigner;
+    }
 }
