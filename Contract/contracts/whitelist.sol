@@ -26,7 +26,7 @@ contract whitelistAndprivatelistChecker is EIP712{
   
     function _hash(whitelisted memory list) internal view returns (bytes32) {
     return _hashTypedDataV4(keccak256(abi.encode(
-      keccak256("whitelisted(address whiteListAddress, bool isPrivateListed)"),
+      keccak256("whitelisted(address whiteListAddress,bool isPrivateListed)"),
 
       list.whiteListAddress,
       list.isPrivateListed
