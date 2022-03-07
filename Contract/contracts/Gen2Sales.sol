@@ -5,13 +5,14 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./whitelist.sol";
+import "hardhat/console.sol";
 
-contract Gen2Sales is Ownable,whitelistChecker{
+contract Gen2Sales is Ownable, whitelistChecker {
 
     IERC721 Godjira2;
     IERC721 Godjira1;
     address CORE_TEAM_ADDRESS = 0xC79b099E83f6ECc8242f93d35782562b42c459F3; 
-    address designatedSigner; //TODO : Set Address
+    address public designatedSigner; //TODO : Set Address
 
     uint PRICE = 0.099 ether;
 
@@ -50,7 +51,8 @@ contract Gen2Sales is Ownable,whitelistChecker{
     }
     //Region 1 - Sales
 
-    function privateSale(whitelisted memory whitelist) external payable isNotPaused{
+    function privateSale(whitelisted memory whitelist) external payable isNotPaused {
+        console.log(getSigner(whitelist), designatedSigner);
         require(getSigner(whitelist) == designatedSigner, "Invalid signature");
         require(msg.sender == whitelist.whiteListAddress, "not same user");
         require(whitelist.isPrivateListed, "is not private listed");
@@ -130,35 +132,35 @@ contract Gen2Sales is Ownable,whitelistChecker{
         Godjira2 = IERC721(_godjira);
     }
 
-    function modifyGodjira1(address _godjira) external onlyOwner{
+    function modifyGodjira1(address _godjira) external onlyOwner {
         Godjira1 = IERC721(_godjira);
     }
 
-    function modifySigner(address _signer) external onlyOwner{
+    function modifySigner(address _signer) external onlyOwner {
         designatedSigner = _signer;
     }
 
-    function modifyCoreTeamAddress(address _core) external onlyOwner{
+    function modifyCoreTeamAddress(address _core) external onlyOwner {
         CORE_TEAM_ADDRESS = _core;
     }
 
-    function modifyPrice(uint _price) external onlyOwner{
+    function modifyPrice(uint _price) external onlyOwner {
         PRICE = _price;
     }
 
-    function modifyPrivateTime(uint _time) external onlyOwner{
+    function modifyPrivateTime(uint _time) external onlyOwner {
         PRIVATE_TIME = _time;
     }
 
-    function modifyWhitelistTime(uint _time) external onlyOwner{
+    function modifyWhitelistTime(uint _time) external onlyOwner {
         WHITELIST_TIME = _time;
     }
 
-    function modifyHolderTime(uint _time) external onlyOwner{
+    function modifyHolderTime(uint _time) external onlyOwner {
         HOLDERS_TIME = _time;
     }
 
-    function modifyClaimTime(uint _time) external onlyOwner{
+    function modifyClaimTime(uint _time) external onlyOwner {
         CLAIM_TIME = _time;
     }
 

@@ -1,10 +1,11 @@
 const { expect } = require('chai')
 const { ethers } = require("hardhat")
 const { advanceTime } = require('./utils')
+const { Whitelist } = require('../lib')
 
 const tokenPrice = ethers.utils.parseUnits('0.0999', 18);
 
-describe.only('Gen2Sale', () => {
+describe.only('Gen2Sales', () => {
   
   before(async () => {
     const users = await ethers.getSigners()
@@ -12,19 +13,6 @@ describe.only('Gen2Sale', () => {
     this.tokenUri = "https://gladiators-metadata-api.herokuapp.com/api/token"
     this.deployer = users[0]
     this.users = users.slice(1)
-
-    this.whitelist = [
-      {
-        'whiteListAddress' : this.users[2].address,
-        'isPrivateListed': true,
-        'signature': "Gensis2Sale"
-      },
-      {
-        'whiteListAddress' : this.users[3].address,
-        'isPrivateListed': false,
-        'signature': "Gensis2Sale"
-      }
-    ]
 
     const genesis = await ethers.getContractFactory('Genesis')
     const mockNFT = await ethers.getContractFactory('MockNFT')
@@ -38,9 +26,6 @@ describe.only('Gen2Sale', () => {
     const gen2Sales = await ethers.getContractFactory('Gen2Sales')
     this.gen2Sales = await gen2Sales.deploy(this.gen2.address, this.genesis.address)
 
-    // Gen2Sale : Set Signer
-    this.gen2Sales.connect(this.deployer).modifySigner("Gensis2Sale")
-
     await this.genesis.connect(this.deployer).mint([10, 20])
     await this.mockNFT.connect(this.deployer).mint(this.users[1].address, 10)
     await this.mockNFT.connect(this.deployer).mint(this.users[1].address, 20)
@@ -51,7 +36,11 @@ describe.only('Gen2Sale', () => {
   })
 
   it('privateSale function succeeds', async () => {
-    await this.gen2Sales.connect(this.deployer).privateSale(this.whitelist)
+    const whitelist = new Whitelist({ contract: this.gen2Sales, signer: this.deployer })
+    const whitelisted = await whitelist.createWhiteList(this.users[2].address, false)
+    await this.gen2Sales.connect(this.deployer).modifySigner(this.users[2].address)
+    // const designatedSigner = await this.gen2Sales.designatedSigner()
+    await this.gen2Sales.connect(this.users[2]).privateSale(whitelisted)
   })
     
     return;
