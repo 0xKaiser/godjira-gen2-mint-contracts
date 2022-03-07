@@ -5,14 +5,13 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./whitelist.sol";
-import "hardhat/console.sol";
 
 contract Gen2Sales is Ownable, whitelistChecker {
 
     IERC721 Godjira2;
     IERC721 Godjira1;
     address CORE_TEAM_ADDRESS = 0xC79b099E83f6ECc8242f93d35782562b42c459F3; 
-    address public designatedSigner; //TODO : Set Address
+    address designatedSigner; //TODO : Set Address
 
     uint PRICE = 0.099 ether;
 
@@ -52,7 +51,6 @@ contract Gen2Sales is Ownable, whitelistChecker {
     //Region 1 - Sales
 
     function privateSale(whitelisted memory whitelist) external payable isNotPaused {
-        console.log(getSigner(whitelist), designatedSigner);
         require(getSigner(whitelist) == designatedSigner, "Invalid signature");
         require(msg.sender == whitelist.whiteListAddress, "not same user");
         require(whitelist.isPrivateListed, "is not private listed");
@@ -113,7 +111,6 @@ contract Gen2Sales is Ownable, whitelistChecker {
             require(tokenId[i] >= 340 && tokenId[i] <= 439,"not valid token");
             require(Godjira2.ownerOf(tokenId[i])==msg.sender,"Sender not owner");
             require(!gen2Claimed[tokenId[i]],"Already claimed");
-
             gen2Claimed[tokenId[i]] = true;
             Godjira2.safeTransferFrom(CORE_TEAM_ADDRESS,msg.sender,claimTracker);
             claimTracker++;
